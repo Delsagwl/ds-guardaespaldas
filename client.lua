@@ -1,29 +1,6 @@
 local QBCore = exports['qb-core']:GetCoreObject()
 local Guard = nil
 
-function UnloadBodyguard()
-    DeletePed(Guard)
-    exports['qb-target']:RemoveSpawnedPed(Guard)
-    Guard = nil
-end
-
-function GetClosestPed()
-    local playerPed = GetPlayerPed(-1)
-    local playerCoords = GetEntityCoords(playerPed)
-    local closestPed = nil
-    for _, ped in ipairs(GetGamePool('CPed')) do
-        if ped ~= playerPed and not IsPedAPlayer(ped) then
-            local pedCoords = GetEntityCoords(ped)
-            local distancia = GetDistanceBetweenCoords(playerCoords, pedCoords, true)
-            if distancia <= 3 then
-                closestPed = ped
-                break
-            end
-        end
-    end
-    return closestPed
-end
-
 local function RotationToDirection(rotation)
 	local ajustarRotacion =
 	{
@@ -75,7 +52,7 @@ function Colocar(coords, ped)
     TaskGoStraightToCoord(ped, coords, 15.0, -1, 0.0, 0.0)
 end
 
-RegisterNetEvent('qb-npccontrol:client:guardaespaldasColocar', function(data)
+RegisterNetEvent('qb-npccontrol:client:Colocar', function(data)
     rayoLaser = not rayoLaser
 
     if rayoLaser then
@@ -98,7 +75,7 @@ RegisterNetEvent('qb-npccontrol:client:guardaespaldasColocar', function(data)
     end
 end)
 
-RegisterNetEvent('qb-npccontrol:client:guardaespaldasGirar', function(data)
+RegisterNetEvent('qb-npccontrol:client:Girar', function(data)
     ClearPedTasks(data.ped)
     SetBlockingOfNonTemporaryEvents(data.ped, true)
     SetEntityHeading(data.ped, GetEntityHeading(PlayerPedId()))
@@ -107,15 +84,14 @@ RegisterNetEvent('qb-npccontrol:client:guardaespaldasGirar', function(data)
     TaskStartScenarioInPlace(data.ped, "WORLD_HUMAN_GUARD_STAND", 0, false)
 end)
 
-
-RegisterNetEvent('qb-npccontrol:client:guardaespaldasseguir', function(data)
+RegisterNetEvent('qb-npccontrol:client:seguir', function(data)
     TaskGoToEntity(data.ped, PlayerPedId(), -1, 2.0, 2.0 , 1073741824, 0)
     TaskFollowToOffsetOfEntity(data.ped, PlayerPedId(), 0.0, -2.0, 0.0, 2.0, -1, 0.0, true)
     SetPedKeepTask(data.ped, true)
     FreezeEntityPosition(data.ped, false)
 end)
 
-RegisterNetEvent('qb-npccontrol:client:guardaespaldasechar', function(data)
+RegisterNetEvent('qb-npccontrol:client:echar', function(data)
     exports['qb-target']:RemoveSpawnedPed(data.ped)
     Guard = nil
 end)
@@ -135,7 +111,6 @@ RegisterNetEvent('qb-npccontrol:client:dararma', function(data)
     TaskStartScenarioInPlace(data.ped, "WORLD_HUMAN_GUARD_STAND", 0, true)
 end)
 
-
 RegisterNetEvent('qb-npccontrol:client:enGuardia', function(data)
     SetBlockingOfNonTemporaryEvents(data.ped, false)
     ClearPedTasks(data.ped)
@@ -150,7 +125,7 @@ RegisterNetEvent('qb-npccontrol:client:quitararma', function(data)
     TaskStartScenarioInPlace(data.ped, "WORLD_HUMAN_GUARD_STAND", 0, true)
 end)
 
-RegisterNetEvent('ds-npccontrol:menu:guardaespaldas', function(targetPed)
+RegisterNetEvent('ds-npccontrol:menu:Guardaespaldas', function(targetPed)
     local MenuGuardaespaldas = {
         {
             header = "npccontrol",
@@ -161,7 +136,7 @@ RegisterNetEvent('ds-npccontrol:menu:guardaespaldas', function(targetPed)
             txt =  "Hacer que te siga",
             icon = "",
             params = {
-                event = "qb-npccontrol:client:guardaespaldasseguir",
+                event = "qb-npccontrol:client:seguir",
                 args = {
                     ped = targetPed
                 }
@@ -172,7 +147,7 @@ RegisterNetEvent('ds-npccontrol:menu:guardaespaldas', function(targetPed)
             txt =  "Colocar en un punto",
             icon = "",
             params = {
-                event = "qb-npccontrol:client:guardaespaldasColocar",
+                event = "qb-npccontrol:client:Colocar",
                 args = {
                     ped = targetPed
                 }
@@ -183,7 +158,7 @@ RegisterNetEvent('ds-npccontrol:menu:guardaespaldas', function(targetPed)
             txt =  "Hacer que mire en tu dirección",
             icon = "",
             params = {
-                event = "qb-npccontrol:client:guardaespaldasGirar",
+                event = "qb-npccontrol:client:Girar",
                 args = {
                     ped = targetPed
                 }
@@ -238,7 +213,7 @@ RegisterNetEvent('ds-npccontrol:menu:guardaespaldas', function(targetPed)
             txt =  "Hacer que se vaya",
             icon = "",
             params = {
-                event = "qb-npccontrol:client:guardaespaldasechar",
+                event = "qb-npccontrol:client:echar",
                 args = {
                     ped = targetPed
                 }
@@ -252,7 +227,6 @@ RegisterCommand("guardaespaldas", function()
     local PlayerData = QBCore.Functions.GetPlayerData()
     local playerPed = PlayerPedId()
     local posicionPlayer = GetOffsetFromEntityInWorldCoords(playerPed, 0.0, 1.0, 0.0)
-    local heading = GetEntityHeading(PlayerPedId())
     if Guadaespaldas.Gang[PlayerData.gang.name] then
         Guard = exports['qb-target']:SpawnPed({
             spawnNow = true,
@@ -275,13 +249,13 @@ RegisterCommand("guardaespaldas", function()
                         gang = Guadaespaldas.Gang,
                         job = Guadaespaldas.Job,
                         action = function(entity)
-                            TriggerEvent('ds-npccontrol:menu:guardaespaldas', entity)
+                            TriggerEvent('ds-npccontrol:menu:Guardaespaldas', entity)
                         end,
                     }
                 },
                 distancia = 2.5,
             },
         })
-        SetEntityHeading(Guard, heading)
+        SetEntityHeading(Guard, GetEntityHeading(PlayerPedId()))
     end
 end, false)
